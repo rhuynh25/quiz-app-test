@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 require('dotenv').config({ path: '../.env' }); 
+const path = require('path');
 
 const app = express();
 app.use(express.json()); // Middleware to parse JSON request bodies
@@ -11,7 +12,11 @@ const claudeBaseURL = 'https://api.anthropic.com/v1/messages'; // Correct base U
 
 // Handle CORS for cross-origin requests
 const cors = require('cors');
-app.use(cors()); 
+app.use(cors({
+  origin: 'https://quiz-app-0ql9.onrender.com', 
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // Default route for root path
 app.get('/', (req, res) => {
@@ -132,6 +137,15 @@ app.post('/api/verify-answer', async (req, res) => {
     res.status(500).send('Failed to verify answer');
   }
 });
+
+// Serve static files from the React app (after the build step)
+app.use(express.static(path.join(__dirname, 'build')));
+
+// Handle React routing, return all requests to the front-end app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
 
 // Start the server
 app.listen(port, () => {
